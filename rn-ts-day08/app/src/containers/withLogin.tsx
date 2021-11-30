@@ -3,8 +3,8 @@ import { Alert } from "react-native";
 import { Login } from "../components"
 import { LoginProps } from "../components/Login/Login";
 import { AuthNavProps } from "../interface/AuthParamList";
-
-
+import sqlite from "../model/mysqlite"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 
 interface WithLoginProps extends AuthNavProps<"Login"> {
 
@@ -25,10 +25,6 @@ const withLogin = (Component: React.FC<LoginProps>): React.FC<WithLoginProps> =>
             password: "",
             isLogin: false,
         });
-        useEffect(() => {
-          
-        }, [])
-
         const handleChangeText = (value: any, isFlag: boolean) => {
             isFlag
                 ?
@@ -45,17 +41,27 @@ const withLogin = (Component: React.FC<LoginProps>): React.FC<WithLoginProps> =>
         const handleSubmit = async () => {
             if (state.username.length > 0 && state.password.length > 0) {
                 if (state.username.trim() && state.password.trim()) {
-                    navigation?.navigate("Home")      
+                    const result = await sqlite.selectUser(state.username,state.password) 
+                    if(result.msg){
+                        const username = result.userList[0].username;
+                        AsyncStorage.setItem("username",username)
+                        navigation?.navigate('Home')
+                    }
                 }
             } else {
                 Alert.alert("Warning!!", "Please enter your username and password");
             }
         }
-        const handleRegister = () => {
+        const handleRegister = async () => {
             try {
                 if (state.username.length > 0 && state.password.length > 0) {
                     if (state.username.trim() && state.password.trim()) {
-                       
+                        const result = await sqlite.addUsername(state.username,state.password);
+                        if(result){
+                            Alert.alert("Cong","注册成功")
+                        }else{
+                            Alert.alert("failed","注册失败")
+                        }
                     }
                 } else {
                     Alert.alert("Warning!", "Register input can not empty")
